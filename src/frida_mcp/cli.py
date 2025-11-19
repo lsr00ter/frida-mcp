@@ -30,7 +30,7 @@ def enumerate_processes(
     device_id: Optional[str] = Field(default=None, description="Optional ID of the device to enumerate processes from. Uses USB device if not specified.")
 ) -> List[Dict[str, Any]]:
     """List all processes running on the system.
-    
+
     Returns:
         A list of process information dictionaries containing:
         - pid: Process ID
@@ -47,7 +47,7 @@ def enumerate_processes(
 @mcp.tool()
 def enumerate_devices() -> List[Dict[str, Any]]:
     """List all devices connected to the system.
-    
+
     Returns:
         A list of device information dictionaries containing:
         - id: Device ID
@@ -68,7 +68,7 @@ def enumerate_devices() -> List[Dict[str, Any]]:
 @mcp.tool()
 def get_device(device_id: str = Field(description="The ID of the device to get")) -> Dict[str, Any]:
     """Get a device by its ID.
-    
+
     Returns:
         Information about the device
     """
@@ -86,7 +86,7 @@ def get_device(device_id: str = Field(description="The ID of the device to get")
 @mcp.tool()
 def get_usb_device() -> Dict[str, Any]:
     """Get the USB device connected to the system.
-    
+
     Returns:
         Information about the USB device
     """
@@ -104,7 +104,7 @@ def get_usb_device() -> Dict[str, Any]:
 @mcp.tool()
 def get_local_device() -> Dict[str, Any]:
     """Get the local device.
-    
+
     Returns:
         Information about the local device
     """
@@ -155,12 +155,12 @@ def attach_to_process(
 
 @mcp.tool()
 def spawn_process(
-    program: str = Field(description="The program or application identifier to spawn."), 
-    args: Optional[List[str]] = Field(default=None, description="Optional list of arguments for the program."), 
+    program: str = Field(description="The program or application identifier to spawn."),
+    args: Optional[List[str]] = Field(default=None, description="Optional list of arguments for the program."),
     device_id: Optional[str] = Field(default=None, description="Optional ID of the device where the program should be spawned. Uses USB device if not specified.")
 ) -> Dict[str, Any]:
     """Spawn a program.
-    
+
     Returns:
         Information about the spawned process
     """
@@ -169,9 +169,9 @@ def spawn_process(
             device = frida.get_device(device_id)
         else:
             device = frida.get_usb_device()
-            
+
         pid = device.spawn(program, args=args or [])
-        
+
         return {"pid": pid}
     except Exception as e:
         raise ValueError(f"Failed to spawn {program}: {str(e)}")
@@ -179,11 +179,11 @@ def spawn_process(
 
 @mcp.tool()
 def resume_process(
-    pid: int = Field(description="The ID of the process to resume."), 
+    pid: int = Field(description="The ID of the process to resume."),
     device_id: Optional[str] = Field(default=None, description="Optional ID of the device where the process is running. Uses USB device if not specified.")
 ) -> Dict[str, Any]:
     """Resume a process by ID.
-    
+
     Returns:
         Status information
     """
@@ -192,9 +192,9 @@ def resume_process(
             device = frida.get_device(device_id)
         else:
             device = frida.get_usb_device()
-            
+
         device.resume(pid)
-        
+
         return {"success": True, "pid": pid}
     except Exception as e:
         raise ValueError(f"Failed to resume process {pid}: {str(e)}")
@@ -202,11 +202,11 @@ def resume_process(
 
 @mcp.tool()
 def kill_process(
-    pid: int = Field(description="The ID of the process to kill."), 
+    pid: int = Field(description="The ID of the process to kill."),
     device_id: Optional[str] = Field(default=None, description="Optional ID of the device where the process is running. Uses USB device if not specified.")
 ) -> Dict[str, Any]:
     """Kill a process by ID.
-    
+
     Returns:
         Status information
     """
@@ -215,9 +215,9 @@ def kill_process(
             device = frida.get_device(device_id)
         else:
             device = frida.get_usb_device()
-            
+
         device.kill(pid)
-        
+
         return {"success": True, "pid": pid}
     except Exception as e:
         raise ValueError(f"Failed to kill process {pid}: {str(e)}")
@@ -250,9 +250,9 @@ def create_interactive_session(
     device_id: Optional[str] = Field(default=None, description="Optional ID of the device where the process is running. Uses USB device if not specified.")
 ) -> Dict[str, Any]:
     """Create an interactive REPL-like session with a process.
-    
+
     This returns a session ID that can be used with execute_in_session to run commands.
-    
+
     Returns:
         Information about the created session
     """
@@ -263,22 +263,22 @@ def create_interactive_session(
         else:
             device = frida.get_usb_device()
         session = device.attach(process_id)
-        
+
         # Generate a unique session ID
         session_id = f"session_{process_id}_{int(time.time())}"
-        
+
         # Store the session
         _scripts[session_id] = session
         _script_messages[session_id] = []
         _message_locks[session_id] = threading.Lock()
-        
+
         return {
             "status": "success",
             "process_id": process_id,
             "session_id": session_id,
             "message": f"Interactive session created for process {process_id}. Use execute_in_session to run JavaScript commands."
         }
-    
+
     except Exception as e:
         return {
             "status": "error",
@@ -288,8 +288,8 @@ def create_interactive_session(
 
 @mcp.tool()
 def execute_in_session(
-    session_id: str = Field(description="The unique identifier of the active Frida session. This ID is obtained when the session is first created."), 
-    javascript_code: str = Field(description="A string containing the JavaScript code to be executed in the target process\'s context. The script can use Frida\'s JavaScript API (e.g., Interceptor, Memory, Module, rpc)."), 
+    session_id: str = Field(description="The unique identifier of the active Frida session. This ID is obtained when the session is first created."),
+    javascript_code: str = Field(description="A string containing the JavaScript code to be executed in the target process\'s context. The script can use Frida\'s JavaScript API (e.g., Interceptor, Memory, Module, rpc)."),
     keep_alive: bool = Field(default=False, description="A boolean flag indicating whether the script should remain loaded in the target process after its initial execution. If False (default), the script is unloaded after initial run. If True, it persists for hooks/RPC and messages are retrieved via get_session_messages. Note: With keep_alive=True, JavaScript code should manage log volume (limits, deduplication) to prevent too many messages.")
 ) -> Dict[str, Any]:
     """Execute JavaScript code within an existing interactive Frida session.
@@ -299,14 +299,14 @@ def execute_in_session(
     """
     if session_id not in _scripts:
         raise ValueError(f"Session with ID {session_id} not found")
-    
+
     session = _scripts[session_id]
     lock = _message_locks[session_id]
 
     try:
         # For interactive use, we need to handle console.log output
         # and properly format the result
-        
+
         # Wrap the code to capture console.log output and return values
         # This basic wrapper sends back immediate script result/errors and console.log output
         # For keep_alive=True, subsequent messages from the script (e.g., from Interceptor)
@@ -315,7 +315,7 @@ def execute_in_session(
         (function() {{
             var initialLogs = [];
             var originalLog = console.log;
-            
+
             console.log = function() {{
                 var args = Array.prototype.slice.call(arguments);
                 var logMsg = args.map(function(arg) {{
@@ -324,7 +324,7 @@ def execute_in_session(
                 initialLogs.push(logMsg);
                 originalLog.apply(console, arguments); // Also keep original console behavior
             }};
-            
+
             var scriptResult;
             var scriptError;
             try {{
@@ -332,9 +332,9 @@ def execute_in_session(
             }} catch (e) {{
                 scriptError = {{ message: e.toString(), stack: e.stack }};
             }}
-            
+
             console.log = originalLog; // Restore
-            
+
             send({{ // This send is for the initial execution result
                 type: 'execution_receipt',
                 result: scriptError ? undefined : (scriptResult !== undefined ? scriptResult.toString() : 'undefined'),
@@ -343,12 +343,12 @@ def execute_in_session(
             }});
         }})();
         """
-        
+
         script = session.create_script(wrapped_code)
-        
+
         # This list captures messages from the initial execution of the script (the wrapper)
-        initial_execution_results = [] 
-        
+        initial_execution_results = []
+
         def on_initial_message(message, data):
             # This handler is for the initial execution wrapper's send()
             if message["type"] == "send" and message["payload"]["type"] == "execution_receipt":
@@ -374,9 +374,9 @@ def execute_in_session(
         else:
             # For non-persistent scripts, use the local handler for immediate results
             script.on("message", on_initial_message)
-        
+
         script.load()
-        
+
         # For non-persistent scripts, give a short time for the initial_execution_results
         # For persistent scripts, this sleep is less critical as it's about setting up.
         if not keep_alive:
@@ -427,7 +427,7 @@ def execute_in_session(
             final_result["info"] = "Script is persistent. Remember to manage its lifecycle if necessary."
 
         return final_result
-    
+
     except frida.InvalidOperationError as e: # E.g. session detached
         return {"status": "error", "error": f"Frida operation error: {str(e)} (Session may be detached)"}
     except Exception as e:
@@ -442,7 +442,7 @@ def get_session_messages(
     session_id: str = Field(description="The ID of the session to retrieve messages from.")
 ) -> Dict[str, Any]:
     """Retrieve and clear messages sent by persistent scripts in a session.
-    
+
     Returns:
         A list of messages captured since the last call, or an error if the session is not found.
     """
@@ -460,7 +460,7 @@ def get_session_messages(
     with lock:
         messages = list(_script_messages[session_id])  # Make a copy
         _script_messages[session_id].clear()  # Clear the queue
-        
+
     return {
         "status": "success",
         "session_id": session_id,
@@ -475,4 +475,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
